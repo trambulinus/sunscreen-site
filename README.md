@@ -16,17 +16,6 @@ Live at [sunscreen.watch](https://sunscreen.watch).
 | `privacy.html` | privacy policy — the full version of the one shown in the app |
 | `support.html` | help and contact |
 
-## Running it
-
-Plain HTML, CSS and a little JavaScript. No build step and no dependencies — open
-`index.html` in a browser, or serve the folder:
-
-```bash
-python3 -m http.server 8000
-```
-
-Every page works without JavaScript; it only adds the hero carousel and a fade-in on scroll.
-
 ## About the model page
 
 The numbers on `the-math.html` — the film-persistence studies, the facial dosimetry, the
