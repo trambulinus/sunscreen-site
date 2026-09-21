@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The model — Sunscreen for Apple Watch</title>
+<meta name="description" content="How Sunscreen turns solar elevation, UV forecast, cloud cover and time in daylight into a reapplication time: the dose budget, the fourteen-hour ceiling, and the offline maths.">
+<meta name="theme-color" content="#0F0F11">
+<link rel="icon" href="assets/icon.png">
+<link rel="stylesheet" href="styles.css">
+<script>document.documentElement.classList.remove('no-js');</script>
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="wrap">
+  <nav class="nav">
+    <img class="nav__mark" src="assets/icon.png" alt="">
+    <a class="nav__name" href="index.html">Sunscreen</a>
+    <div class="nav__links">
+      <a href="index.html">Overview</a>
+      <a href="support.html">Support</a>
+    </div>
+  </nav>
+</header>
+
+<main id="main">
+<section style="padding-bottom:0">
+  <div class="wrap wrap--narrow">
+    <p class="eyebrow">The model</p>
+    <h1 class="display" style="font-size:clamp(2.1rem,5vw,3.1rem)">What the timer is<br>actually made of</h1>
+    <p class="lede">
+      The short version lives on the <a href="index.html#model">overview</a>. This is the long version: every input, what the app does
+      with it, and what it leaves out.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap wrap--narrow prose">
+
+    <h2>1. Where the sun is</h2>
+    <p>
+      Sunscreen starts with astronomy, because it's free. From latitude, longitude and the
+      time, it computes the sun's <strong>elevation above the horizon</strong> — declination,
+      equation of time, hour angle, all of it arithmetic done in UTC with a longitude offset,
+      which sidesteps time zones and daylight saving entirely.
+    </p>
+    <p>
+      This isn't how it gets the UV. The forecast already has UV, with ozone, cloud and angle
+      baked in. Elevation answers a different question: <strong>how much of the light
+      behind that number is the kind that ages skin</strong>. UVI&nbsp;2 at 4pm in July and UVI&nbsp;2 at noon in November
+      are the same number carrying different amounts of the wavelength that ages you, and
+      elevation is the only thing on hand that can tell them apart.
+    </p>
+    <p>
+      It buys two other things worth having on a watch: it works with no network at all, and it
+      needs no permission. If you haven't granted Location, the app uses the principal city of
+      your time zone instead — a few tenths of a degree of elevation error, which doesn't matter that much —
+      so the astronomy runs from the first launch either way.
+    </p>
+
+    <figure class="figure">
+      <div class="figure__body">
+        <svg viewBox="0 0 720 380" role="img" aria-label="Line chart of the UVA to UVB ratio against solar elevation. The ratio is flat near 17 from 30 degrees up to 90 degrees, and rises steeply below 30 degrees, reaching about 50 near the horizon.">
+          <!-- shaded regime band -->
+          <rect x="56" y="30" width="213.3" height="298" fill="#E8AE30" opacity="0.06"></rect>
+          <line x1="269.3" y1="30" x2="269.3" y2="328" stroke="#E8AE30" stroke-width="1" stroke-dasharray="4 4" opacity="0.55"></line>
+
+          <!-- grid -->
+          <line class="svg-grid" x1="56" y1="268.4" x2="696" y2="268.4"></line>
+          <line class="svg-grid" x1="56" y1="208.8" x2="696" y2="208.8"></line>
+          <line class="svg-grid" x1="56" y1="149.2" x2="696" y2="149.2"></line>
+          <line class="svg-grid" x1="56" y1="89.6"  x2="696" y2="89.6"></line>
+          <text class="svg-label" x="46" y="272" text-anchor="end">20</text>
+          <text class="svg-label" x="46" y="212" text-anchor="end">30</text>
+          <text class="svg-label" x="46" y="153" text-anchor="end">40</text>
+          <text class="svg-label" x="46" y="93"  text-anchor="end">50</text>
+
+          <!-- axes -->
+          <line class="svg-axis" x1="56" y1="328" x2="696" y2="328"></line>
+          <text class="svg-label" x="56"  y="348">0°</text>
+          <text class="svg-label" x="269.3" y="348" text-anchor="middle">30°</text>
+          <text class="svg-label" x="482.7" y="348" text-anchor="middle">60°</text>
+          <text class="svg-label" x="696" y="348" text-anchor="end">90°</text>
+          <text class="svg-note" x="376" y="370" text-anchor="middle">Solar elevation above the horizon</text>
+          <text class="svg-note" x="56" y="20">UVA / UVB ratio</text>
+
+          <!-- zone labels -->
+          <text class="svg-note" x="162" y="52" text-anchor="middle" fill="#F5D06B">correction applies</text>
+          <text class="svg-note" x="484" y="52" text-anchor="middle">index already tracks UVA — no correction</text>
+
+          <!-- the curve -->
+          <polyline fill="none" stroke="#F0BE45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            points="78.8,65.8 89.4,108.3 100.1,142.6 110.8,170.3 121.4,192.7 132.1,210.8 142.8,225.3 153.4,237.1 164.1,246.6 174.8,254.2 185.4,260.4 196.1,265.4 206.8,269.4 217.4,272.7 228.1,275.3 238.8,277.4 249.4,279.1 260.1,280.5 270.8,281.6 281.4,282.5 292.1,283.2 302.8,283.8 313.4,284.3 324.1,284.7 334.8,285.0 345.4,285.2 356.1,285.4 366.8,285.6 377.4,285.7 388.1,285.8 398.8,285.9 409.4,286.0 420.1,286.0 430.8,286.1 441.4,286.1 452.1,286.2 462.8,286.2 473.4,286.2 484.1,286.2 494.8,286.2 505.4,286.2 516.1,286.2 526.8,286.3 537.4,286.3 548.1,286.3 558.8,286.3 569.4,286.3 580.1,286.3 590.8,286.3 601.4,286.3 612.1,286.3 622.8,286.3 633.4,286.3 644.1,286.3 654.8,286.3 665.4,286.3 676.1,286.3 686.8,286.3"></polyline>
+
+          <!-- the two annotated points, both at UVI 2 -->
+          <circle cx="240.9" cy="277.8" r="5" fill="#0F0F11" stroke="#F5D06B" stroke-width="2"></circle>
+          <line x1="240.9" y1="272.8" x2="240.9" y2="180" stroke="#F5D06B" stroke-width="1" opacity="0.45"></line>
+          <text class="svg-title" x="234" y="168" text-anchor="end">Noon, November</text>
+          <text class="svg-note"  x="234" y="184" text-anchor="end">elev 26° · UVI 2</text>
+
+          <circle cx="340.4" cy="285.1" r="5" fill="#0F0F11" stroke="rgba(255,255,255,0.55)" stroke-width="2"></circle>
+          <line x1="340.4" y1="280.1" x2="340.4" y2="228" stroke="rgba(255,255,255,0.35)" stroke-width="1"></line>
+          <text class="svg-title" x="350" y="216">4pm, July</text>
+          <text class="svg-note"  x="350" y="232">elev 40° · UVI 2</text>
+        </svg>
+      </div>
+      <figcaption>
+        <strong>Same UV Index, different aging dose.</strong> Both moments read UVI&nbsp;2, but the
+        November sun sits low enough that UVA has pulled away from the index. Sunscreen computes solar elevation not to work out the UV — the forecast already has that —
+        but to know how much the index is under-counting. At 44°N, November through February
+        sits entirely in the shaded half.
+      </figcaption>
+    </figure>
+
+
+    <h2>2. What the sky is doing</h2>
+    <p>
+      Once a morning, Sunscreen pulls the day's hourly forecast — UV index and cloud cover for
+      all 24 hours — and caches it. One network request per day, no repeated wake-ups, and the
+      rest of the day runs from the cache.
+    </p>
+    <p>
+      Forecast UV arrives as a whole number, which has no resolution left at the bottom of its
+      range: below UVI&nbsp;2 the difference between 0.4 and 1.4 has been rounded away, and those
+      differ by a factor of three. So at low values the app leans on its own clear-sky model
+      attenuated by cloud instead, and at higher values it takes the forecast, capped against
+      what the sun's angle physically permits. A stale cache can't produce an impossible number.
+    </p>
+    <p class="mono" style="color:var(--ink-2);font-size:0.95rem">
+      clear-sky UVI &nbsp;≈&nbsp; 10 · sin(elevation)<sup>2.4</sup>
+    </p>
+    <p class="small muted">
+      For Bucharest at 44.4°N that gives about 8.5 at summer-solstice noon (elevation ~69°) and
+      about 1 at winter noon (elevation ~22°) — close enough to carry the estimate when the
+      watch has no signal.
+    </p>
+
+    <figure class="watch-figure">
+      <div class="watch"><img src="assets/screenshots/log-detail.png" alt="A logged application on the watch: four gauges reading 12:10, 44 degrees of elevation, UV 3 and 99 percent cloud cover." loading="lazy"></div>
+      <figcaption>Each log keeps what the model saw: the time, the sun's elevation, the UV index and the cloud cover.</figcaption>
+    </figure>
+
+    <h2>3. What your face receives</h2>
+    <p>
+      Ambient UV is not facial UV. Two corrections turn one into the other, and they're
+      independent, so they compound:
+    </p>
+    <ul>
+      <li>
+        <strong>Geometry.</strong> Fitted to headform dosimetry — median facial dose as a fraction
+        of horizontal ambient, 26% with the sun high, 39% mid-band, 48% with the sun low<a class="ref" href="#ref-1">1</a>. The
+        share nearly doubles as the sun drops, because low light strikes a near-vertical face
+        square on while overhead light lands on your scalp.
+      </li>
+      <li>
+        <strong>Spectrum.</strong> UVB is filtered out of the atmosphere far faster than UVA as the
+        sun drops, so the aging share of what arrives climbs as the index falls<a class="ref" href="#ref-2">2</a><a class="ref" href="#ref-3">3</a>. The correction
+        follows that curve; the exponent is a judgment call, and treated as one.
+      </li>
+    </ul>
+    <p>
+      Together they produce a <strong>load rate</strong>: aging-weighted dose per hour of outdoor
+      time, on your face specifically. At high summer sun the combined multiplier sits below one
+      — a vertical face genuinely receives less than the ground does — and it climbs to a capped
+      four as the sun drops, so no combination of bad inputs can run away with the timer.
+    </p>
+
+    <h2>4. What you've actually spent</h2>
+    <p>
+      Rate is only half of it. Your watch already records
+      <strong>Time in Daylight</strong> — the minutes your watch saw real daylight — outside, or
+      beside a bright window — not the minutes you had the app open — and Sunscreen reads that, and only that, from Health. Multiply those minutes by the rate and you have the daylight dose — the UV that actually
+      reached you — one of the two things that run the clock down. This is what the app calls <strong>adaptive mode</strong>: grant Health and Location
+      access and the timer follows your actual daylight and local UV. Decline, and it still runs
+      — from your time zone, assuming you're mostly indoors.
+    </p>
+
+    <figure class="watch-figure">
+      <div class="watch"><img src="assets/screenshots/adaptive.png" alt="The app's info screen: the words 'Turn on adaptive mode' above a round button, with the Apple Weather mark below." loading="lazy"></div>
+      <figcaption>Adaptive mode is one button on the info screen. It asks for Health and Location access, and nothing else.</figcaption>
+    </figure>
+
+    <h2>5. The clock, and what runs it down</h2>
+    <p>
+      Every application starts a clock, and the clock runs down in two ways at once.
+    </p>
+    <p>
+      <strong>Time.</strong> The film degrades on its own — sebum, face-touching, rubbing, UVA
+      through window glass. With no sun at all it is spent after <strong>fourteen hours</strong>.
+      It doesn't degrade evenly, either: the measurements below put over half of a day's loss in
+      the first two hours, flattening after that. So the model uses the measured shape — loss
+      rising as roughly <em>t</em><sup>0.4</sup> — rather than a straight line.
+    </p>
+    <p>
+      <strong>Dose.</strong> UV that gets through the film accumulates damage. <strong>Twelve
+      load units</strong> of face-received, photoaging-weighted UV spend the budget on their own.
+    </p>
+    <p class="mono" style="color:var(--ink-2);font-size:0.95rem">
+      (t / 14&nbsp;h)<sup>0.4</sup> &nbsp;+&nbsp; dose / 12 &nbsp;=&nbsp; 1 &nbsp;→&nbsp; reapply
+    </p>
+    <p>
+      The two add up rather than compete, because they wear down the same film. If they were
+      separate alarms — whichever went off first — a day that used a third of the time and a
+      third of the dose would trigger neither, even though two-thirds of the protection is gone.
+    </p>
+    <p>
+      Two things follow. Someone who stays in all day is asked again after fourteen hours —
+      for a morning application that lands after dark, so the app waits for the next morning
+      instead: <strong>one application a day</strong>. And a day in open sun runs the dose down
+      every hour and a half or so, which means more applications — deliberately, because
+      those are exactly the days when swimming and sweat take the film off anyway.
+    </p>
+    <p>
+      The time term is also where the unobservable things live. Towels, face-touching, rubbing,
+      sebum, UVA through glass — none of it can be seen from a wrist, and all of it steadily
+      degrades the film rather than arriving as events you could detect. So it isn't modelled
+      as events. It is the fourteen-hour curve, and that curve is what all of it looks like from
+      outside.
+    </p>
+
+    <figure class="figure">
+        <div class="figure__panels">
+          <div>
+            <svg viewBox="25 0 330 320" role="img" aria-label="Film depletion on a desk day. A concave curve rises from an 8am application, steepens during 45 minutes outdoors at lunch, reaches the reapply line at 1:40pm, restarts, and stays below the line for the rest of the day.">
+              <text class="svg-title" x="46" y="26">Desk day</text>
+              <text class="svg-note"  x="46" y="43">45 min outdoors at lunch</text>
+
+              <line class="svg-grid" x1="46" y1="262" x2="340" y2="262"></line>
+              <line x1="46" y1="85.4" x2="340" y2="85.4" stroke="#E8AE30" stroke-width="1" stroke-dasharray="4 4" opacity="0.5"></line>
+              <text class="svg-label" x="40" y="89"  text-anchor="end">1</text>
+              <text class="svg-label" x="40" y="266" text-anchor="end">0</text>
+              <text class="svg-note"  x="340" y="79" text-anchor="end" fill="#F5D06B">reapply</text>
+
+              <polyline fill="none" stroke="#A8822E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"
+                points="70.5,262 74.6,232 78.7,222.4 82.7,215.4 86.8,209.7 90.9,204.9 95,200.5 99.1,196.6 103.2,193.1 107.2,189.7 111.3,186.6 115.4,183.7 119.5,180.9 123.6,178.3 127.7,175.8 131.7,173.3 135.8,171 139.9,168.8 144,166.6 148.1,164.6 152.2,162.5 156.2,160.6 160.3,158.7 164.4,156.8 168.5,155 172.6,153.2 176.7,151.5 180.7,149.8 184.8,134.6 188.9,119.4 193,104.1 197.1,88.8 201.2,87.3 205.2,85.8 209.3,85.4 209.3,262 213.4,232 217.5,222.4 221.6,215.4 225.7,209.7 229.7,204.9 233.8,200.5 237.9,196.6 242,193.1 246.1,189.7 250.2,186.6 254.2,183.7 258.3,180.9 262.4,178.3 266.5,175.8 270.6,173.3 274.7,171 278.7,168.8 282.8,166.6 286.9,164.6 291,162.5 295.1,160.6 299.2,158.7 303.2,156.8 307.3,155 311.4,153.2 315.5,151.5 319.6,149.8 323.7,148.2 327.7,146.6 331.8,145 335.9,143.5 340,142"></polyline>
+              <circle cx="209.3" cy="85.4" r="4.5" fill="#F5D06B" stroke="#17171A" stroke-width="2"></circle>
+              <text class="svg-note" x="176" y="118" text-anchor="end">lunch outdoors</text>
+
+              <text class="svg-label" x="46"  y="282">7am</text>
+              <text class="svg-label" x="144" y="282" text-anchor="middle">11am</text>
+              <text class="svg-label" x="242" y="282" text-anchor="middle">3pm</text>
+              <text class="svg-label" x="340" y="282" text-anchor="end">7pm</text>
+              <text class="svg-note"  x="193" y="306" text-anchor="middle">2 applications — 8am and 1:40pm</text>
+            </svg>
+          </div>
+
+          <div>
+            <svg viewBox="382 0 330 320" role="img" aria-label="Film depletion on a beach day. From an 8am application the curve climbs steeply once the sun starts at 10am and reaches the reapply line four times, at 11:20, 12:50, 2:10 and 3:40, restarting each time. Five applications in total.">
+              <text class="svg-title" x="402" y="26">Beach day</text>
+              <text class="svg-note"  x="402" y="43">10am to 5pm in open sun</text>
+
+              <line class="svg-grid" x1="402" y1="262" x2="696" y2="262"></line>
+              <line x1="402" y1="85.4" x2="696" y2="85.4" stroke="#E8AE30" stroke-width="1" stroke-dasharray="4 4" opacity="0.5"></line>
+              <text class="svg-label" x="396" y="89"  text-anchor="end">1</text>
+              <text class="svg-label" x="396" y="266" text-anchor="end">0</text>
+
+              <polyline fill="none" stroke="#F5D06B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"
+                points="426.5,262 430.6,232 434.7,222.4 438.7,215.4 442.8,209.7 446.9,204.9 451,200.5 455.1,196.6 459.2,193.1 463.2,189.7 467.3,186.6 471.4,183.7 475.5,180.9 479.6,169.2 483.7,157.1 487.7,144.6 491.8,131.8 495.9,118.5 500,104.8 504.1,90.9 508.2,85.4 508.2,262 512.2,219.6 516.3,197.3 520.4,177.4 524.5,158.5 528.6,140.3 532.7,122.5 536.7,105.2 540.8,88 544.9,85.4 544.9,262 549,218.3 553.1,194.9 557.2,174.2 561.2,154.8 565.3,136.2 569.4,118.1 573.5,100.5 577.6,85.4 577.6,262 581.7,218.6 585.7,195.7 589.8,175.7 593.9,157.1 598,139.5 602.1,122.8 606.2,106.9 610.2,91.8 614.3,85.4 614.3,262 618.4,221.3 622.5,201.4 626.6,184.7 630.7,169.8 634.7,156.4 638.8,144.1 642.9,132.7 647,122.2 651.1,118.9 655.2,115.8 659.2,112.9 663.3,110.1 667.4,107.5 671.5,105 675.6,102.5 679.7,100.2 683.7,98 687.8,95.8 691.9,93.7 696,91.7"></polyline>
+              <g fill="#F5D06B" stroke="#17171A" stroke-width="2">
+                <circle cx="508.2" cy="85.4" r="4.5"></circle>
+                <circle cx="544.9" cy="85.4" r="4.5"></circle>
+                <circle cx="577.6" cy="85.4" r="4.5"></circle>
+                <circle cx="614.3" cy="85.4" r="4.5"></circle>
+              </g>
+
+              <text class="svg-label" x="402" y="282">7am</text>
+              <text class="svg-label" x="500" y="282" text-anchor="middle">11am</text>
+              <text class="svg-label" x="598" y="282" text-anchor="middle">3pm</text>
+              <text class="svg-label" x="696" y="282" text-anchor="end">7pm</text>
+              <text class="svg-note"  x="549" y="306" text-anchor="middle">5 applications — roughly every hour and a half</text>
+            </svg>
+          </div>
+        </div>
+      <figcaption>
+        <strong>The same clock, two very different days.</strong> Each line is how spent the film is,
+        time and dose together; each dot is a prompt, and the line restarts when you reapply. The
+        desk day crosses once, mid-afternoon, then climbs again but not far enough before dark.
+        The beach day crosses every hour and a half. Notice the shape between prompts — steep at
+        first, then flattening. That is the measured film loss, not a straight line.
+      </figcaption>
+    </figure>
+
+    <h2>Why fourteen hours, and not two</h2>
+    <p>
+      The two-hour rule entered US labelling guidance in 2007<a class="ref" href="#ref-4">4</a>,
+      and measurement since has not supported it. Tag a properly applied film with a
+      fluorescent marker and photograph it across a working day: indoor workers were down about
+      <strong>16% at two hours and 28% by the eighth</strong><a class="ref" href="#ref-5">5</a>,
+      and the same method on outdoor workers gave <strong>18% and 32%</strong><a class="ref" href="#ref-6">6</a>
+      — a similar curve under very different sun. Add half an hour of exercise and eighty minutes
+      in water, and SPF still fell only
+      <strong>15–40% over eight hours</strong><a class="ref" href="#ref-7">7</a>.
+    </p>
+    <p>
+      Two things fall out of that. The loss <strong>front-loads and then flattens</strong> — over
+      half of a full day's degradation has already happened by hour two. Taking the two
+      indoor-worker points literally, 28.2 ÷ 16.3 = 1.73 = 4<sup><em>p</em></sup> gives
+      <em>p</em> ≈ 0.4: loss grows as roughly <em>t</em><sup>0.4</sup>, and that is the curve
+      the model uses. And the figures cluster near <strong>30% over eight hours</strong> across
+      sedentary and outdoor work alike, which is a long way from being completely unprotected after two.
+    </p>
+    <p>
+      The studies disagree on what to conclude. The indoor-worker authors decided
+      reapplication may be unnecessary; the outdoor-worker authors concluded it is essential, and
+      that past four hours what remains may not be enough. Both follow from their own data, and the gap between them is the reason to measure rather
+      than count: what matters isn't hours elapsed, it's how much sun actually landed on you.
+    </p>
+    <p>
+      Sweat is the one variable that genuinely compresses the window. Spectroscopy puts an SPF 50
+      film at full strength for six hours at rest, but only about two on an active wearer, sliding
+      toward SPF 30 by the sixth hour<a class="ref" href="#ref-8">8</a>. Sunscreen has no workout or swim detection, so a runner and a desk worker look the same to
+      it. The mitigation is that the days producing the most prompts — beach, hiking, a day's outdoor work — are exactly the days when sweat and water take the film off anyway. Heavy
+      dose is a fair proxy for removal even though the removal itself is invisible.
+    </p>
+    <p>
+      The fourteen-hour ceiling extrapolates 1.75× past the measured eight. That is a real stretch,
+      but it only binds for someone receiving almost no dose — anyone with meaningful exposure is
+      brought in by the dose term long before — so the downside is small, and the upside is that
+      a low-exposure day produces one application rather than two.
+    </p>
+    <p>
+      None of this is a relaxation of the advice — it is a correction toward the evidence. The
+      trial that actually demonstrated sunscreen prevents photoaging tested <em>daily</em>
+      application, not frequent reapplication<a class="ref" href="#ref-9">9</a>.
+    </p>
+    <p class="small muted">
+      And all of it assumes you put enough on to begin with. Under-application dominates every
+      other term here: in that durability trial, halving the dose from 2 to 1&nbsp;mg/cm² took an
+      SPF 70 product from an SPF above 64 at eight hours down to 26. No amount of modelling
+      compensates for that.
+    </p>
+
+    <h2>6. Knowing when not to ask</h2>
+    <p>
+      A depletion model tells you when protection has run down. It does not tell you when it's
+      reasonable to interrupt someone, and those are different questions. The intervention with
+      trial evidence behind it is applying every day, and an app that nags on ordinary days costs
+      the adherence that makes that happen. So the model is generous on time and strict on dose:
+      an indoor day gets one prompt, an office day one or two, and only a day genuinely spent in
+      the sun gets more.
+    </p>
+    <p>
+      Before any prompt, the app asks a second question: how much dose could the rest of today
+      still deliver if you stayed out until dark? Under about <strong>15% of the budget</strong>,
+      it stays quiet — reapplying for the last hour of weak sun isn't worth the interruption.
+      Because that cutoff comes from the sun rather than the clock, it moves with the season:
+      late afternoon in summer, early afternoon in December. It is also why a fourteen-hour clock
+      started in the morning never fires at ten at night — it lands past the cutoff and rolls to
+      the next morning.
+    </p>
+    <p>
+      The first prompt of the day comes from the sun too. It fires when the sun first climbs past
+      about <strong>13° of elevation</strong> — high enough for the dose to be worth blocking —
+      which lands earlier in summer and later in winter without anyone setting a time, and never
+      before seven or after eleven. Where 13° is never reached, as in a Copenhagen December, the target scales down to 60% of that day's
+      peak, so the prompt still arrives, just later. And it's gated the same way as everything
+      else: if the whole day can't deliver even 5% of the budget, there's no morning prompt at
+      all. Anything that would land at night is delivered silently, or moved to the next morning.
+    </p>
+    <p>
+      If you miss it, there is one more nudge. When daylight minutes start accumulating and nothing
+      has been logged today, you've walked out unprotected — the one moment worth interrupting.
+      It isn't repeated.
+    </p>
+
+    <h2>7. What it deliberately doesn't model</h2>
+    <p>
+      A model that claims more than it knows is worse than a coarse one, so Sunscreen leaves
+      several obvious-looking things out on purpose:
+    </p>
+    <ul>
+      <li><strong>Your skin type.</strong> Fitzpatrick classification predicts how fast you
+        <em>burn</em>. This is a photoaging model, and it doesn't ask.</li>
+      <li><strong>Your SPF number.</strong> SPF is measured at 2&nbsp;mg/cm² in a lab. Almost
+        nobody applies that much, so the number on the bottle isn't the protection on your face,
+        and multiplying by it would only add false precision.</li>
+      <li><strong>Sunburn risk.</strong> Sunscreen does not predict burning and shouldn't be used
+        to. It's a different pathway with a different weighting.</li>
+      <li><strong>Swimming, sweat and towelling.</strong> Real, and invisible from a wrist, so they
+        aren't asked about. The time curve absorbs the everyday kind; the heavy kind happens on exactly the days the dose term is already producing the most prompts.</li>
+    </ul>
+
+    <h2>Notes and sources</h2>
+    <p class="small">
+      The measurements above come from published work rather than from us. Every figure traces
+      to one of these.
+    </p>
+
+    <ol class="refs">
+      <li id="ref-1">
+        Downs N, Parisi A. <cite>Measurements of the anatomical distribution of erythemal
+        ultraviolet: a study comparing exposure distribution to the site incidence of solar
+        keratoses, basal cell carcinoma and squamous cell carcinoma.</cite> Photochem Photobiol
+        Sci. 2009;8(8):1195–1201.
+        <a href="https://doi.org/10.1039/b901741k" rel="noopener">doi.org/10.1039/b901741k</a>
+        · See also their <cite>Three dimensional visualisation of human facial exposure to solar
+        ultraviolet</cite>, Photochem Photobiol Sci. 2007;6(1):90–98,
+        <a href="https://doi.org/10.1039/b607553c" rel="noopener">doi.org/10.1039/b607553c</a>
+      </li>
+      <li id="ref-2">
+        Kollias N, Ruvolo E, Sayre RM. <cite>The value of the ratio of UVA to UVB in
+        sunlight.</cite> Photochem Photobiol. 2011;87(6):1474–1475.
+        <a href="https://doi.org/10.1111/j.1751-1097.2011.00980.x" rel="noopener">doi.org/10.1111/j.1751-1097.2011.00980.x</a>
+        · <a href="https://pubmed.ncbi.nlm.nih.gov/21770951/" rel="noopener">PubMed</a>
+      </li>
+      <li id="ref-3">
+        Sola Y, Lorente J. <cite>Contribution of UVA irradiance to the erythema and photoaging
+        effects in solar and sunbed exposures.</cite> J Photochem Photobiol B. 2015;143:5–11.
+        <a href="https://doi.org/10.1016/j.jphotobiol.2014.10.024" rel="noopener">doi.org/10.1016/j.jphotobiol.2014.10.024</a>
+      </li>
+      <li id="ref-4">
+        US Food and Drug Administration. <cite>Sunscreen Drug Products for Over-the-Counter Human
+        Use; Proposed Amendment of Final Monograph.</cite> Federal Register 72:49070,
+        27&nbsp;August&nbsp;2007.
+        <a href="https://www.federalregister.gov/documents/2007/08/27/E7-16326/sunscreen-drug-products-for-over-the-counter-human-use-proposed-amendment-of-final-monograph" rel="noopener">federalregister.gov</a>
+      </li>
+      <li id="ref-5">
+        Rungananchai C, Silpa-Archa N, Wongpraparut C, Suiwongsa B, Sangveraphunsiri V,
+        Manuskiatti W. <cite>Sunscreen application to the face persists beyond 2 hours in indoor
+        workers: an open-label trial.</cite> J Dermatolog Treat. 2019;30(5):483–486.
+        <a href="https://doi.org/10.1080/09546634.2018.1530440" rel="noopener">doi.org/10.1080/09546634.2018.1530440</a>
+        · <a href="https://pubmed.ncbi.nlm.nih.gov/30273065/" rel="noopener">PubMed</a>
+      </li>
+      <li id="ref-6">
+        Kobwanthanakun W, Silpa-archa N, Wongpraparut C, Pruksaekanan C, Manuskiatti W.
+        <cite>An evaluation of the course of facial sunscreen coverage and sustainability over an
+        8-hour workday among outdoor workers.</cite> Health Sci Rep. 2021;4(3):e350.
+        <a href="https://doi.org/10.1002/hsr2.350" rel="noopener">doi.org/10.1002/hsr2.350</a>
+        · <a href="https://pubmed.ncbi.nlm.nih.gov/34401526/" rel="noopener">PubMed</a>
+      </li>
+      <li id="ref-7">
+        Ouyang H, Meyer K, Maitra P, Daly S, Svoboda RM, Farberg AS, Rigel DS.
+        <cite>Realistic Sunscreen Durability: A Randomized, Double-blinded, Controlled Clinical
+        Study.</cite> J Drugs Dermatol. 2018;17(1):116–117.
+        <a href="https://pubmed.ncbi.nlm.nih.gov/29320597/" rel="noopener">PubMed</a>
+      </li>
+      <li id="ref-8">
+        Ruvolo E, Aeschliman L, Cole C. <cite>Evaluation of sunscreen efficacy over time and
+        re-application using hybrid diffuse reflectance spectroscopy.</cite> Photodermatol
+        Photoimmunol Photomed. 2020;36(3):192–199.
+        <a href="https://doi.org/10.1111/phpp.12535" rel="noopener">doi.org/10.1111/phpp.12535</a>
+        · <a href="https://pubmed.ncbi.nlm.nih.gov/32027038/" rel="noopener">PubMed</a>
+      </li>
+      <li id="ref-9">
+        Hughes MC, Williams GM, Baker P, Green AC. <cite>Sunscreen and prevention of skin aging:
+        a randomized trial.</cite> Ann Intern Med. 2013;158(11):781–790.
+        <a href="https://doi.org/10.7326/0003-4819-158-11-201306040-00002" rel="noopener">doi.org/10.7326/0003-4819-158-11-201306040-00002</a>
+        · <a href="https://pubmed.ncbi.nlm.nih.gov/23732711/" rel="noopener">PubMed</a>
+      </li>
+    </ol>
+
+    <p class="disclaimer">
+      Sunscreen is a general wellbeing tool, not a medical device. It estimates a modelled UV
+      dose from forecast and sensor data — it doesn't measure your skin, and it can't diagnose,
+      treat or prevent any condition. Keep following the guidance on your bottle and from your
+      doctor or dermatologist.
+    </p>
+
+    <p style="margin-top:3rem"><a href="index.html">← Back to the overview</a></p>
+  </div>
+</section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer__cta">
+      <h2>Stop guessing at two hours.</h2>
+      <div class="cta-row">
+        <!-- APP STORE LINK — replace idXXXXXXXXX everywhere when the app is live -->
+        <a class="btn btn--primary" href="https://apps.apple.com/app/idXXXXXXXXX">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3v12"></path><path d="M7 11l5 5 5-5"></path><path d="M4 20h16"></path>
+          </svg>
+          <span>Download<span class="btn__sub">on the App&nbsp;Store</span></span>
+        </a>
+      </div>
+    </div>
+    <div class="footer__bar">
+      <span>&copy; <span data-year>2026</span> Sunscreen</span>
+      <a href="index.html">Overview</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="support.html">Support</a>
+      <span class="spacer">For Apple Watch</span>
+    </div>
+  </div>
+</footer>
+
+<script src="main.js"></script>
+</body>
+</html>
