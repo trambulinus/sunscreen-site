@@ -63,6 +63,9 @@
     track.style.transform = 'translateX(calc(' + (-index * 100) + '% + ' + offset + 'px))';
     slides.forEach(function (s, i) { s.setAttribute('aria-hidden', i === index ? 'false' : 'true'); });
     dots.forEach(function (d, i) { d.setAttribute('aria-selected', i === index ? 'true' : 'false'); });
+    // the halo and the active dot take the colour of the sun on screen
+    var sun = slides[index].getAttribute('data-sun');
+    if (sun) root.style.setProperty('--sun', sun);
   }
   function restart() {
     clearInterval(timer); timer = null;

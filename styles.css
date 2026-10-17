@@ -1,35 +1,64 @@
 /* ==========================================================================
    Sunscreen — marketing site
    One stylesheet, shared by index / the-math / privacy / support.
-   Palette: warm amber sun on near-black charcoal.
+   Colours come from the watch app: the sun's tint by UV level (UVILevel),
+   the complication skies (SunGlyph.sky) and the icon's twilight, on watchOS
+   black leaning toward the night sky.
    ========================================================================== */
+
+/* the hero sun's colour, registered so it can fade between UV levels */
+@property --sun {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #FFEC8F;
+}
 
 :root {
   /* surfaces */
-  --bg:          #0F0F11;
-  --surface:     #17171A;
-  --surface-2:   #1E1E22;
-  --line:        rgba(255, 255, 255, 0.09);
-  --line-strong: rgba(255, 255, 255, 0.16);
+  --bg:          #0A0B16;
+  --surface:     #121428;
+  --surface-2:   #191C36;
+  --line:        rgba(196, 204, 255, 0.09);
+  --line-strong: rgba(196, 204, 255, 0.17);
+
+  /* the sun by UV level — UVILevel.style.color, night through extreme */
+  --uv-0:      #5642A6;
+  --uv-0-haze: #6B49F2;
+  --uv-1:      #FFF2AD;
+  --uv-2:      #FFEC8F;
+  --uv-3:      #FFDB70;
+  --uv-4:      #FFCD52;
+  --uv-5:      #FFBF33;
+  --uv-6:      #FFA319;
+  --uv-7:      #FF840A;
+  --uv-8:      #FF5D00;
+  --uv-9:      #FA3A00;
+  --uv-11:     #EB0523;
+
+  /* the whole scale, the way the app's UV gauge draws it */
+  --uv-spectrum: linear-gradient(90deg, var(--uv-0-haze), var(--uv-1), var(--uv-3), var(--uv-5), var(--uv-7), var(--uv-9), var(--uv-11));
+
+  /* skies — SunGlyph.sky; the top is always the deeper colour, like looking up */
+  --sky-night:    linear-gradient(180deg, #0F1433, #1C2452, #2B3669);
+  --sky-twilight: linear-gradient(180deg, #3B4A8A, #B8667A, #F0A170);
+  --sky-high:     linear-gradient(180deg, #1F5EB8, #4A91D9, #9EC2E0);
+  --sky-cloudy:   linear-gradient(180deg, #597394, #8096B5, #A8BDD1);
 
   /* brand */
-  --amber:        #E8AE30;
-  --amber-bright: #F5D06B;
-  --amber-dim:    #A8822E;
-
-  /* data (sequential intensity — one hue, dim → bright) */
-  --data-lo: #A8822E;
-  --data-hi: #F0BE45;
+  --amber:        var(--uv-4);
+  --amber-bright: var(--uv-2);
+  --amber-dim:    #C9A458;
 
   /* ink */
-  --ink:   rgba(255, 255, 255, 0.93);
-  --ink-2: rgba(255, 255, 255, 0.68);
-  --ink-3: rgba(255, 255, 255, 0.45);
+  --ink:   rgba(255, 252, 244, 0.94);
+  --ink-2: rgba(232, 234, 255, 0.70);
+  --ink-3: rgba(220, 224, 255, 0.48);
 
   /* type */
-  --font-sans:  -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-mono:  ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
-  --font-serif: ui-serif, "New York", Georgia, "Times New Roman", serif;
+  --font-sans:    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-rounded: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono:    ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --font-serif:   ui-serif, "New York", Georgia, "Times New Roman", serif;
 
   /* rhythm */
   --wrap: 62rem;
@@ -46,6 +75,7 @@ html {
 }
 
 body {
+  position: relative;
   margin: 0;
   background: var(--bg);
   color: var(--ink-2);
@@ -57,9 +87,24 @@ body {
   overflow-x: hidden;
 }
 
+/* the icon's twilight, faintly, above every page */
+body::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 46rem;
+  background:
+    radial-gradient(52rem 26rem at 50% -8rem, rgba(59, 74, 138, 0.55), transparent 70%),
+    radial-gradient(34rem 18rem at 50% -6rem, rgba(184, 102, 122, 0.22), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body > * { position: relative; z-index: 1; }
+
 img { max-width: 100%; display: block; }
 
-a { color: var(--amber); text-decoration-color: rgba(232, 174, 48, 0.35); text-underline-offset: 3px; }
+a { color: var(--amber); text-decoration-color: rgba(255, 205, 82, 0.35); text-underline-offset: 3px; }
 a:hover { color: var(--amber-bright); text-decoration-color: currentColor; }
 
 h1, h2, h3 { color: var(--ink); line-height: 1.12; letter-spacing: -0.022em; margin: 0; font-weight: 600; }
@@ -98,13 +143,28 @@ section { padding-block: var(--gap-section); }
 
 /* ---------------------------------------------------------- typography -- */
 
+/* each eyebrow carries a small sun; sections set --dot to walk the UV scale */
 .eyebrow {
+  --dot: var(--amber);
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
   font-family: var(--font-mono);
   font-size: 0.72rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--amber);
+  color: color-mix(in oklab, var(--dot) 72%, white);
   margin: 0 0 1.35rem;
+}
+
+.eyebrow::before {
+  content: "";
+  flex: none;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--dot);
+  box-shadow: 0 0 12px 1px color-mix(in srgb, var(--dot) 75%, transparent);
 }
 
 .display {
@@ -169,24 +229,32 @@ strong { color: var(--ink); font-weight: 600; }
 
 .hero {
   position: relative;
-  padding-block: clamp(3rem, 7vw, 5.5rem) var(--gap-section);
+  padding-block: clamp(0.5rem, 2vw, 1.5rem) var(--gap-section);
 }
 
-/* the single soft glow on the page */
-.hero::before {
-  content: "";
-  position: absolute;
-  top: -14rem;
-  left: 50%;
-  width: min(78rem, 155vw);
-  aspect-ratio: 1;
-  transform: translateX(-50%);
-  background: radial-gradient(circle, rgba(232, 174, 48, 0.13) 0%, rgba(232, 174, 48, 0.045) 34%, transparent 62%);
-  pointer-events: none;
-  z-index: 0;
+.wrap--wide { max-width: 74rem; }
+
+/* the app icon's sky, as one big card: twilight overhead, the horizon glowing
+   beneath the sun. Deeper at the top than the icon so the words stay legible */
+.sky {
+  --horizon-x: 50%;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: clamp(1.75rem, 4vw, 2.75rem);
+  padding: clamp(2.25rem, 6vw, 4.5rem) clamp(1.4rem, 5vw, 4.25rem);
+  background:
+    radial-gradient(115% 78% at var(--horizon-x) 112%, rgba(240, 161, 112, 0.95), rgba(184, 102, 122, 0.72) 38%, rgba(184, 102, 122, 0) 76%),
+    linear-gradient(180deg, #151A42 0%, #262F6C 30%, #3B4A8A 60%, #5E5590 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 40px 120px -48px rgba(184, 102, 122, 0.55);
 }
 
-.hero > * { position: relative; z-index: 1; }
+@media (min-width: 62rem) { .sky { --horizon-x: 76%; } }
+
+.sky .lede { color: rgba(240, 242, 255, 0.86); }
+.sky .cta-note { color: rgba(240, 242, 255, 0.76); }
 
 .hero__grid {
   display: grid;
@@ -203,7 +271,49 @@ strong { color: var(--ink); font-weight: 600; }
   height: 78px;
   border-radius: 20px;
   margin-bottom: 1.9rem;
-  box-shadow: 0 10px 44px rgba(232, 174, 48, 0.2);
+  box-shadow: 0 12px 36px rgba(15, 20, 51, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+/* SunUI on the web: the icon's two halo rings around the hero watch, and a haze
+   in the colour of whichever sun is on screen, breathing slowly */
+.sun-halo {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--hero-w) * 0.596);
+  width: calc(var(--hero-w) * 1.95);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(255, 232, 196, 0.1);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sun-halo::before,
+.sun-halo::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+}
+
+.sun-halo::before {
+  inset: 13%;
+  background: rgba(255, 232, 196, 0.14);
+}
+
+.sun-halo::after {
+  inset: 4%;
+  background: radial-gradient(circle closest-side,
+    var(--sun) 50%,
+    color-mix(in srgb, var(--sun) 55%, transparent) 68%,
+    color-mix(in srgb, var(--sun) 16%, transparent) 86%,
+    transparent 100%);
+  animation: sun-breathe 7s ease-in-out infinite alternate;
+}
+
+@keyframes sun-breathe {
+  from { opacity: 0.6; transform: scale(0.97); }
+  to   { opacity: 1;   transform: scale(1.04); }
 }
 
 /* ---------------------------------------------------------------- cta --- */
@@ -228,15 +338,20 @@ strong { color: var(--ink); font-weight: 600; }
   transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
 }
 
+/* a sun to press: butter at the core, gold at the rim, with its haze */
 .btn--primary {
-  background: linear-gradient(180deg, var(--amber-bright), var(--amber));
-  color: #17130A;
-  box-shadow: 0 6px 26px rgba(232, 174, 48, 0.26);
+  background: radial-gradient(130% 160% at 30% 20%, var(--uv-1), var(--uv-3) 48%, var(--uv-5));
+  color: #2A1D04;
+  box-shadow:
+    0 0 0 1px rgba(255, 236, 143, 0.35),
+    0 6px 30px rgba(255, 191, 51, 0.38);
 }
 .btn--primary:hover {
-  color: #17130A;
+  color: #2A1D04;
   transform: translateY(-1px);
-  box-shadow: 0 9px 32px rgba(232, 174, 48, 0.36);
+  box-shadow:
+    0 0 0 1px rgba(255, 236, 143, 0.5),
+    0 9px 40px rgba(255, 191, 51, 0.55);
 }
 
 .btn--ghost {
@@ -321,7 +436,16 @@ strong { color: var(--ink); font-weight: 600; }
   max-width: 20em;
 }
 
-.premise__quote em { color: var(--amber); font-style: italic; }
+/* "the sun", in the colours it actually goes through */
+.premise__quote em {
+  color: var(--uv-5);
+  font-style: italic;
+  background: linear-gradient(90deg, var(--uv-2), var(--uv-6) 55%, var(--uv-9));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  padding-right: 0.08em;
+}
 
 /* -------------------------------------------------------------- ideas --- */
 
@@ -371,7 +495,7 @@ strong { color: var(--ink); font-weight: 600; }
 
 /* svg helpers */
 .svg-label   { font-family: var(--font-sans); font-size: 12px; fill: rgba(255,255,255,0.45); }
-.svg-value   { font-family: var(--font-mono); font-size: 21px; font-weight: 600; fill: #F5D06B; }
+.svg-value   { font-family: var(--font-mono); font-size: 21px; font-weight: 600; fill: var(--uv-3); }
 .svg-title   { font-family: var(--font-sans); font-size: 13px; font-weight: 600; fill: rgba(255,255,255,0.93); }
 .svg-note    { font-family: var(--font-sans); font-size: 11.5px; fill: rgba(255,255,255,0.45); }
 .svg-axis    { stroke: rgba(255,255,255,0.16); stroke-width: 1; }
@@ -379,35 +503,68 @@ strong { color: var(--ink); font-weight: 600; }
 
 /* --------------------------------------------------------------- grid --- */
 
-.cards {
+/* each feature heads up with a rectangular complication: one of the app's skies,
+   the glyph as big as the slot allows, a small-caps caption over a rounded
+   headline, and the thin bar beneath tinted by the sun */
+.features {
   display: grid;
-  gap: 1px;
+  gap: clamp(2.25rem, 4vw, 2.75rem) clamp(1.25rem, 3vw, 2rem);
   margin-top: 3.25rem;
-  background: var(--line);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  overflow: hidden;
 }
 
-@media (min-width: 46rem) { .cards { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 46rem) { .features { grid-template-columns: 1fr 1fr; } }
 
-.card {
-  background: var(--surface);
-  padding: clamp(1.5rem, 3.4vw, 2.1rem);
+.feature p { margin: 1.1rem 0.25rem 0; font-size: 0.96rem; color: var(--ink-2); }
+
+.complication {
+  --tint: var(--uv-3);
+  --fill: 0.5;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: clamp(0.9rem, 2.4vw, 1.3rem);
+  min-height: 7.25rem;
+  padding: 1.1rem clamp(1.1rem, 3vw, 1.5rem);
+  border-radius: 1.6rem;
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 22px 50px -28px var(--glow, rgba(0, 0, 0, 0.8));
 }
 
-.card h3 { margin-bottom: 0.55rem; }
-.card p { margin: 0; font-size: 0.96rem; color: var(--ink-2); }
+.complication__glyph { width: clamp(3.4rem, 9vw, 4.1rem); height: auto; display: block; }
+
+.complication h3 {
+  font-family: var(--font-rounded);
+  font-size: clamp(1.18rem, 2.2vw, 1.32rem);
+  letter-spacing: -0.005em;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(10, 14, 40, 0.25);
+}
 
 .card__k {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--amber-dim);
   display: block;
-  margin-bottom: 0.9rem;
+  font-family: var(--font-sans);
+  font-variant-caps: all-small-caps;
+  font-size: 1.02rem;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.86);
+  margin-bottom: 0.15rem;
 }
+
+.complication__bar {
+  display: block;
+  height: 0.38rem;
+  margin-top: 0.75rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--tint) calc(var(--fill) * 100%), rgba(255, 255, 255, 0.3) 0);
+}
+
+.sky--high     { background: var(--sky-high);     --glow: rgba(31, 94, 184, 0.9); }
+.sky--twilight { background: var(--sky-twilight); --glow: rgba(184, 102, 122, 0.9); }
+.sky--cloudy   { background: var(--sky-cloudy);   --glow: rgba(89, 115, 148, 0.9); }
+.sky--night    { background: var(--sky-night);    --glow: rgba(107, 73, 242, 0.55); box-shadow: inset 0 0 0 1px rgba(196, 204, 255, 0.1), 0 22px 50px -28px var(--glow); }
 
 /* --------------------------------------------------------------- step --- */
 
@@ -419,15 +576,24 @@ strong { color: var(--ink); font-weight: 600; }
 
 @media (min-width: 52rem) { .steps { grid-template-columns: repeat(3, 1fr); } }
 
-.step { display: flex; flex-direction: column; align-items: flex-start; gap: 1.5rem; }
-.step .watch { --watch-w: 100%; max-width: 14rem; align-self: center; }
+.step { --halo: var(--uv-3); display: flex; flex-direction: column; align-items: flex-start; gap: 1.5rem; }
+/* each screen glows in the colour of the sun it's showing */
+.step .watch {
+  --watch-w: 100%;
+  max-width: 14rem;
+  align-self: center;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 26px 60px -18px rgba(0, 0, 0, 0.9),
+    0 0 70px -10px color-mix(in srgb, var(--halo) 45%, transparent);
+}
 .step h3 { margin-bottom: 0.5rem; }
 .step p { margin: 0; font-size: 0.96rem; }
 .step__n {
   font-family: var(--font-mono);
   font-size: 0.72rem;
   letter-spacing: 0.16em;
-  color: var(--amber);
+  color: var(--halo);
 }
 
 /* ------------------------------------------------------------- inline --- */
@@ -436,7 +602,7 @@ strong { color: var(--ink); font-weight: 600; }
   margin-top: 2.5rem;
   padding: 1.4rem 1.6rem;
   border-left: 2px solid var(--amber);
-  background: linear-gradient(90deg, rgba(232, 174, 48, 0.07), transparent 70%);
+  background: linear-gradient(90deg, rgba(255, 205, 82, 0.07), transparent 70%);
   border-radius: 0 10px 10px 0;
 }
 .callout p { margin: 0; }
@@ -448,7 +614,17 @@ strong { color: var(--ink); font-weight: 600; }
   max-width: 44em;
 }
 
-.rule { border: 0; border-top: 1px solid var(--line); margin: 0; }
+/* the UV gauge's gradient, laid flat as a divider */
+.rule {
+  border: 0;
+  height: 1px;
+  margin: 0 auto;
+  max-width: var(--wrap);
+  background: var(--uv-spectrum);
+  opacity: 0.55;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+}
 
 /* --------------------------------------------------------------- prose - */
 
@@ -474,10 +650,29 @@ strong { color: var(--ink); font-weight: 600; }
   padding-block: clamp(3.5rem, 7vw, 5rem) 3rem;
 }
 
-.footer__cta { text-align: center; padding-bottom: clamp(3rem, 6vw, 4.5rem); }
+/* the day ends where the hero began: the night sky, the last of the sunset
+   still on the horizon */
+.footer__cta {
+  text-align: center;
+  margin-bottom: clamp(3rem, 6vw, 4.5rem);
+  padding: clamp(3rem, 7vw, 4.75rem) 1.5rem;
+  border-radius: clamp(1.75rem, 4vw, 2.75rem);
+  background:
+    radial-gradient(90% 55% at 50% 125%, rgba(184, 102, 122, 0.5), transparent 72%),
+    var(--sky-night);
+  box-shadow: inset 0 0 0 1px rgba(196, 204, 255, 0.09);
+}
 .footer__cta h2 { max-width: 16em; margin-inline: auto; }
 .footer__cta .cta-row { justify-content: center; }
 .footer__cta .lede { margin-inline: auto; }
+
+.footer__icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  margin: 0 auto 1.6rem;
+  box-shadow: 0 0 46px rgba(240, 161, 112, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
 
 .footer__bar {
   border-top: 1px solid var(--line);
@@ -574,7 +769,7 @@ ol.refs li::before {
   color: var(--amber);
 }
 
-ol.refs li:target { background: rgba(232, 174, 48, 0.07); }
+ol.refs li:target { background: rgba(255, 205, 82, 0.07); }
 
 .refs cite { font-style: italic; color: var(--ink-2); }
 .refs a { color: var(--ink-3); text-decoration-color: rgba(255, 255, 255, 0.22); }
@@ -590,7 +785,17 @@ ol.refs li:target { background: rgba(232, 174, 48, 0.07); }
 /* One bezel; the screen inside it slides. Without JavaScript the track sits
    at the first shot and the controls are hidden, so it degrades to a still. */
 
-.hero-carousel { width: min(17.5rem, 74vw); margin-inline: auto; user-select: none; -webkit-user-select: none; }
+.hero-carousel {
+  --hero-w: min(17.5rem, 74vw);
+  --sun: #FFEC8F;
+  position: relative;
+  width: var(--hero-w);
+  margin-inline: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: --sun 1.2s ease;
+}
+.hero-carousel > :not(.sun-halo) { position: relative; z-index: 1; }
 .hero-carousel .watch { --watch-w: 100%; }
 
 .carousel__frame {
@@ -614,24 +819,26 @@ ol.refs li:target { background: rgba(232, 174, 48, 0.07); }
   display: grid; place-items: center;
   width: 2.25rem; height: 2.25rem;
   border-radius: 999px;
-  border: 1px solid var(--line-strong);
-  background: none;
-  color: var(--ink-2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(15, 20, 51, 0.18);
+  color: rgba(255, 255, 255, 0.88);
   cursor: pointer;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   transition: background 0.16s ease, color 0.16s ease;
 }
-.carousel__arrow:hover { background: var(--surface); color: var(--ink); }
+.carousel__arrow:hover { background: rgba(255, 255, 255, 0.16); color: #fff; }
 
 .carousel__dots { display: flex; align-items: center; gap: 0.5rem; }
 .carousel__dot {
   width: 0.375rem; height: 0.375rem;
   border-radius: 999px; border: 0; padding: 0;
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.4);
   cursor: pointer;
   transition: width 0.2s ease, background 0.2s ease;
 }
-.carousel__dot:hover { background: rgba(255, 255, 255, 0.45); }
-.carousel__dot[aria-selected="true"] { width: 1.25rem; background: var(--amber); }
+.carousel__dot:hover { background: rgba(255, 255, 255, 0.65); }
+.carousel__dot[aria-selected="true"] { width: 1.25rem; background: var(--sun); box-shadow: 0 0 10px var(--sun); }
 
 .carousel__note { text-align: center; margin-top: 1rem; }
 
